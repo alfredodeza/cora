@@ -38,7 +38,7 @@ function shell_cmd {
     fi
 }
 
-vre_bin="$(vre_path)$1/bin"
+vre_bin="$(vre_path)$1/runtime/bin"
 
 #if [ ! -e "$vre_bin" ]; then
 #    echo "Did not find virtual runtime directory: $vre_bin"
@@ -54,7 +54,6 @@ if [ "$#" = 2 ]; then
     export CORA_URL="$1"
     export CORA_USERNAME="$2"
 fi
-
 python <<END
 import sys
 import shutil
@@ -249,8 +248,5 @@ def main():
             print 'create a new one with: "cora [url|dir] username"'
 
 if __name__ == "__main__":
-    try:
-        main()
-    except CoraExit:
-        pass
+    main()
 END
