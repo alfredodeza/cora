@@ -158,8 +158,13 @@ def make_virtualenv(repo_path):
     print "vim virtual runtime set"
     print "before using it you will need to alter \$PATH"
     print "export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin")
+    new_path = "export PATH=%s:\$PATH\n" % os.path.join(runtime_path, "bin")
+    with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
+        zshrc.write(new_path)
+        zshrc.write('source $HOME/.zshrc')
+
     with open(os.path.join(base_path, '.done'), 'w') as done_file:
-            done_file.write('')
+            done_file.write(new_path)
 
 def main():
     ensure_dir(cora_path)
