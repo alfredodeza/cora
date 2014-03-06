@@ -6,28 +6,35 @@ cora
 and plugins (a.k.a. runtime files) on a location that is shared or has not been
 setup.
 
-All environments are created in a contained way and do not pollute anything on
-the system-installed Vim.
+All environments are created in a contained (sandboxed) way and do not pollute
+anything on the system-installed Vim.
 
-Install it::
+There is *no* installation, it is a single script. Download it, make it
+executable and use it::
 
-    pip install cora
+    curl -O https://raw.github.com/alfredodeza/cora/master/bin/cora && chmod a+x cora
 
-Or get it directly with curl from the repository::
-
-    curl -O https://raw.github.com/alfredodeza/cora/master/cora
-
-Note that this is a bit more cumbersome, you will need to make that file
-executable and put it somewhere in your path.
-
+Put it somewhere in your path so it is more convenient.
 
 Try it::
 
-   cora http://github.com/example/dotfiles myname
+   ./cora http://github.com/example/dotfiles myname
 
 The second argument is required when passing a url and that should be the
 username to identify this new vim virtual runtime files (a.k.a. your
 nick/username).
+
+All the magic is set for you in a new shell. That is: it executes an entirely
+new shell with the modified environment. To remove modifications you can
+execute Ctrl-D or call ``exit``.
+
+A typical workflow would look like::
+
+    $ cora foo
+    # edit a bunch of files...
+    $ vim foo
+    $ vim bar
+    $ Ctrl-D
 
 
 requirements
@@ -35,13 +42,14 @@ requirements
 This tool requires ``git`` installed and that you have your dotfiles (or your
 ``.vimrc`` and ``.vim``) published in a git repository.
 
-The alternative is to have a copy of a directory with both your ``.vimrc`` file and
-``.vim`` directory and point ``cora`` to it instead of a url.
+The alternative is to have a copy of a directory with both your ``.vimrc`` file
+and ``.vim`` directory and point ``cora`` to it instead of a url.
 
 You **must** have a ``.vim`` or ``vim`` directory in your dotfiles and you
 **must** have a ``vimrc`` or ``.vimrc`` file too. ``cora`` will search for
 these and copy them over to create the virtual runtime environment.
 
+It currently supports bash and zsh shells only.
 
 What does it do with a url
 --------------------------
@@ -71,13 +79,10 @@ existing environments
 If the environment was already created then cora will simply need to know the
 nickname that was used to created. For a nickname ``alfredo`` this would be::
 
-To set the ``$PATH`` manually::
-
     cora alfredo
 
-Or do it with the cora helper::
-
-    coras alfredo
+The above command will look for that named directory, and if it exists it will
+create a new shell with all the environment ready for Vim.
 
 virtual runtime environments
 ----------------------------
