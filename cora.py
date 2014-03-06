@@ -57,6 +57,7 @@ def which_vim():
 
 
 def run(cmd, **kw):
+    print "--> %s" % ' '.join(cmd)
     stop_on_nonzero = kw.pop("stop_on_nonzero", True)
 
     process = subprocess.Popen(
@@ -90,9 +91,9 @@ def looks_like_url(argument):
     return False
 
 
-def ensure_cora_dir():
-    if not os.path.exists(cora_path):
-        os.mkdir(cora_path)
+def ensure_dir(_path):
+    if not os.path.exists(_path):
+        os.mkdir(_path)
 
 
 def find_vimrc(starting_path):
@@ -114,6 +115,7 @@ def find_vim(starting_path):
 
 def make_virtualenv(repo_path):
     print "making virtualenv from %s" % repo_path
+    base_path = os.path.dirname(repo_path)
     runtime_path = os.path.join(os.path.dirname(repo_path), "runtime")
     rc_path = os.path.join(os.path.dirname(repo_path), "rc")
 
@@ -156,10 +158,11 @@ def make_virtualenv(repo_path):
     print "vim virtual runtime set"
     print "before using it you will need to alter \$PATH"
     print "export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin")
-
+    with open(os.path.join(base_path, '.done')) as done_file:
+            done_file.write('')
 
 def main():
-    ensure_cora_dir()
+    ensure_dir(cora_path)
     url = os.environ.get("CORA_URL")
     username = os.environ.get("CORA_USERNAME")
     machine_out = os.environ.get("CORA_MACHINE_OUT")
@@ -177,13 +180,17 @@ def main():
         return make_virtualenv(clone_destination)
 
     if url and username:
-        if not looks_like_url(url):
-            raise SystemExit("first argument does not look like an url: %s" % url)
-
         clone_destination = os.path.join(os.path.join(cora_path, username), "repo")
-        run(["git", "clone", url, clone_destination])
-        os.chdir(clone_destination)
-        run(["git", "submodule", "update", "--init", "--recursive"])
+        if not looks_like_url(url):
+            if not os.path.exists(url):
+                raise SystemExit("first argument does not look like an url and is not a path: %s" % url)
+            ensure_dir(os.path.join(cora_path, username))
+            run(["cp", "-r", url, clone_destination])
+
+        else:
+            run(["git", "clone", url, clone_destination])
+            os.chdir(clone_destination)
+            run(["git", "submodule", "update", "--init", "--recursive"])
 
         return make_virtualenv(clone_destination)
 
