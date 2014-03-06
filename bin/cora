@@ -8,52 +8,76 @@
 # As opposed to manually having to call ``export`` with the location
 #
 
-zdotdir=''
-bashrc=''
-
 function vre_path {
-    DIR="$HOME/.cora/$1"
+    DIR="$HOME/.cora/$CORA_USERNAME"
     if [ -d "$DIR" ]; then
         echo "$DIR"
     fi
 }
 
 function shell_flags {
-    if [ -n "$BASH" ]
-    then
-        echo "-i --rcfile $bashrc"
-    elif [ -n "$ZSH_VERSION" ]
+    if [ -n "$ZSH_VERSION" ]
     then
         echo "-i"
+
+    elif [ -n "$BASH_VERSION" ]
+    then
+        echo "-i --rcfile $(bashrc)"
     fi
 }
+
 
 function shell_cmd {
-    if [ -n "$BASH" ]
+    # Attempt to get the right command to call for exec. It is actually tricky
+    # to determine if we are BASH or ZSH because if we are on ZSH and are
+    # executing the current script via /bin/sh which can be aliased to BASH
+    # then we will fail to correctly set the right commands.
+    #
+    # Finally, we cannot fully rely on $SHELL because the actual path for that
+    # shell might be a bit different so we need to call `which` on it to get
+    # the right PATH to the executable.
+    #
+    if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
     then
-        echo "$SHELL "
-    elif [ -n "$ZSH_VERSION" ]
+        executable=`which zsh`
+        export ZDOTDIR="$(zdotdir)"
+        echo "$executable -i"
+    elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
     then
-        echo "ZDOTDIR=$zdotdir $SHELL "
+        executable=`which bash`
+        echo "$executable $(shell_flags)"
     fi
 }
 
-vre_bin="$(vre_path)$1/runtime/bin"
 
-#if [ ! -e "$vre_bin" ]; then
-#    echo "Did not find virtual runtime directory: $vre_bin"
-#else
-#    export VIM=$vre_bin/vim
-#    exec $SHELL
-#fi
+function success {
+    if [ -e "$(vre_path)/.done" ]; then
+        echo 1
+    fi
+}
+
+
+function zdotdir {
+    echo "$(vre_path)/rc"
+}
+
+
+function bashrc {
+    echo "$(vre_path)/rc/.bashrc"
+}
+
 
 if [ "$#" = 1 ]; then
     export CORA_USERNAME="$1"
 fi
+
 if [ "$#" = 2 ]; then
     export CORA_URL="$1"
     export CORA_USERNAME="$2"
 fi
+
+vre_bin="$(vre_path)/bin"
+
 python <<END
 import sys
 import shutil
@@ -112,6 +136,7 @@ def which_vim():
 
 
 def run(cmd, **kw):
+    print "--> %s" % ' '.join(cmd)
     stop_on_nonzero = kw.pop("stop_on_nonzero", True)
 
     process = subprocess.Popen(
@@ -145,9 +170,9 @@ def looks_like_url(argument):
     return False
 
 
-def ensure_cora_dir():
-    if not os.path.exists(cora_path):
-        os.mkdir(cora_path)
+def ensure_dir(_path):
+    if not os.path.exists(_path):
+        os.mkdir(_path)
 
 
 def find_vimrc(starting_path):
@@ -169,6 +194,7 @@ def find_vim(starting_path):
 
 def make_virtualenv(repo_path):
     print "making virtualenv from %s" % repo_path
+    base_path = os.path.dirname(repo_path)
     runtime_path = os.path.join(os.path.dirname(repo_path), "runtime")
     rc_path = os.path.join(os.path.dirname(repo_path), "rc")
 
@@ -211,10 +237,15 @@ def make_virtualenv(repo_path):
     print "vim virtual runtime set"
     print "before using it you will need to alter \$PATH"
     print "export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin")
-
+    new_path = "export PATH=%s:\$PATH\n" % os.path.join(runtime_path, "bin")
+    with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
+        zshrc.write('source \$HOME/.zshrc\n')
+        zshrc.write(new_path)
+    with open(os.path.join(base_path, '.done'), 'w') as done_file:
+        done_file.write('')
 
 def main():
-    ensure_cora_dir()
+    ensure_dir(cora_path)
     url = os.environ.get("CORA_URL")
     username = os.environ.get("CORA_USERNAME")
     machine_out = os.environ.get("CORA_MACHINE_OUT")
@@ -232,13 +263,17 @@ def main():
         return make_virtualenv(clone_destination)
 
     if url and username:
-        if not looks_like_url(url):
-            raise SystemExit("first argument does not look like an url: %s" % url)
-
         clone_destination = os.path.join(os.path.join(cora_path, username), "repo")
-        run(["git", "clone", url, clone_destination])
-        os.chdir(clone_destination)
-        run(["git", "submodule", "update", "--init", "--recursive"])
+        if not looks_like_url(url):
+            if not os.path.exists(url):
+                raise SystemExit("first argument does not look like an url and is not a path: %s" % url)
+            ensure_dir(os.path.join(cora_path, username))
+            run(["cp", "-r", url, clone_destination])
+
+        else:
+            run(["git", "clone", url, clone_destination])
+            os.chdir(clone_destination)
+            run(["git", "submodule", "update", "--init", "--recursive"])
 
         return make_virtualenv(clone_destination)
 
@@ -250,3 +285,19 @@ def main():
 if __name__ == "__main__":
     main()
 END
+
+if [ -n "$(success)" ]; then
+
+    if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
+    then
+        executable=`which zsh`
+        export ZDOTDIR="$(zdotdir)"
+        exec $executable -i
+    elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
+    then
+        executable=`which bash`
+        exec $executable $(shell_flags)
+    fi
+
+fi
+
