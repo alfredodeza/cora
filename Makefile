@@ -38,6 +38,7 @@ release: init rmtmp
 	echo -n "add Python header to new cora file ..." && echo "python <<END" >> $(BUILDDIR)/cora && echo -e "$(OK_STRING)";
 	echo -n "adding Python source to cora file ..." && tail -n +3 cora.py >> $(BUILDDIR)/cora && echo -e "$(OK_STRING)";
 	echo -n "appending footer to new cora file ..." && echo "END" >> $(BUILDDIR)/cora && echo -e "$(OK_STRING)";
+	echo -n "appending main functino to cora file ..." && echo "shell_cmd" >> $(BUILDDIR)/cora && echo -e "$(OK_STRING)";
 	@echo
 	@echo -e "$(OK_COLOR)Build finished. The cora executable is located in $(BUILD_OUT)$(NO_COLOR)"
 
