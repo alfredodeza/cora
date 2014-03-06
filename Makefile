@@ -10,13 +10,6 @@ BUILDDIR      = bin
 
 # Locations and files
 BUILD_OUT     = $(BUILDDIR)/$(SCRIPT_NAME)
-#LUA_FILES     = $(shell ls $(SCRIPT_NAME)/*.lua)
-#NONLUA_FILES  = $(shell ls $(SCRIPT_NAME)/ | grep -v ".lua")
-#VERSION       = $(shell cat $(SCRIPT_NAME)/Info.lua|grep VERSION)
-#MAJOR         = $(shell python -c "print '$(VERSION)'.split(',')[0].split('=')[-1]")
-#MINOR         = $(shell python -c "print '$(VERSION)'.split(',')[1].split('=')[-1]")
-#REVISION      = $(shell python -c "print '$(VERSION)'.split(',')[2].split('=')[-1]")
-#BUILD         = $(shell python -c "print '$(VERSION)'.split(',')[3].split('=')[-1]")
 
 # Beautiful colours
 NO_COLOR=\x1b[0m
