@@ -99,7 +99,7 @@ def ensure_dir(_path):
 def find_vimrc(starting_path):
     for root, dirs, files in os.walk(starting_path):
         for name in files:
-            if name == ".vimrc":
+            if name == ".vimrc" or name == "vimrc":
                 return os.path.abspath(os.path.join(root, name))
     raise SystemExit("booo we could not find a .vimrc file :(")
 
@@ -107,7 +107,7 @@ def find_vimrc(starting_path):
 def find_vim(starting_path):
     for root, dirs, files in os.walk(starting_path):
         for name in dirs:
-            if name == ".vim":
+            if name == ".vim" or name == "vim":
                 return os.path.abspath(os.path.join(root, name))
     raise SystemExit("booo we could not find a .vim directory :(")
 
@@ -134,7 +134,7 @@ def make_virtualenv(repo_path):
         coravimrc = os.path.join(vim_destination, "coravimrc")
         os.mkdir(bin_dir)
 
-        shutil.copytree(vim, os.path.join(runtime_path, ".vim"))
+        shutil.copytree(vim, os.path.join(runtime_path, ".vim"), symlinks=True)
         shutil.copyfile(vimrc, os.path.join(vim_destination, ".vimrc"))
 
         with open(coravimrc, "w") as coravimrc_file:
