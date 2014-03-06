@@ -37,15 +37,19 @@ function shell_cmd {
     # shell might be a bit different so we need to call `which` on it to get
     # the right PATH to the executable.
     #
-    if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
-    then
-        executable=`which zsh`
-        export ZDOTDIR="$(zdotdir)"
-        echo "$executable -i"
-    elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
-    then
-        executable=`which bash`
-        echo "$executable $(shell_flags)"
+    if [ -n "$(success)" ]; then
+
+        if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
+        then
+            executable=`which zsh`
+            export ZDOTDIR="$(zdotdir)"
+            exec $executable -i
+        elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
+        then
+            executable=`which bash`
+            exec $executable $(shell_flags)
+        fi
+
     fi
 }
 
@@ -117,6 +121,34 @@ vim_contents = """#!/bin/sh
 cora_path = os.path.expanduser("~/.cora")
 
 
+def colorize(msg, color):
+    available = dict(
+            blue = '\033[94m',
+            green = '\033[92m',
+            yellow = '\033[93m',
+            red = '\033[91m',
+            bold = '\033[1m',
+            ends = '\033[0m'
+        )
+    return "%s%s%s" % (available[color], msg, available['ends'])
+
+
+def warning(msg):
+    print "%s %s" % (colorize('>>>', 'yellow'), msg)
+
+
+def debug(msg):
+    print "%s %s" % (colorize('>>>', 'blue'), msg)
+
+
+def info(msg):
+    print "%s %s" % (colorize('>>>', 'bold'), msg)
+
+
+def error(msg):
+    print "%s %s" % (colorize('>>>', 'red'), msg)
+
+
 def which_vim():
     executable = "vim"
     locations = [
@@ -136,7 +168,7 @@ def which_vim():
 
 
 def run(cmd, **kw):
-    print "--> %s" % ' '.join(cmd)
+    info(' '.join(cmd))
     stop_on_nonzero = kw.pop("stop_on_nonzero", True)
 
     process = subprocess.Popen(
@@ -153,14 +185,14 @@ def run(cmd, **kw):
             if err == "" and process.poll() is not None:
                 break
             if err != "":
-                sys.stderr.write(err)
+                warning(err)
                 sys.stderr.flush()
 
             out = process.stdout.readline()
             if out == "" and process.poll() is not None:
                 break
             if out != "":
-                sys.stdout.write(out)
+                debug(out)
                 sys.stdout.flush()
 
 
@@ -193,10 +225,14 @@ def find_vim(starting_path):
 
 
 def make_virtualenv(repo_path):
-    print "making virtualenv from %s" % repo_path
+    info("making virtualenv from %s" % repo_path)
     base_path = os.path.dirname(repo_path)
     runtime_path = os.path.join(os.path.dirname(repo_path), "runtime")
     rc_path = os.path.join(os.path.dirname(repo_path), "rc")
+    bin_dir = os.path.join(runtime_path, "bin")
+    virtual_vim_executable = os.path.join(bin_dir, "vim")
+    vim_destination = os.path.join(runtime_path, ".vim")
+    coravimrc = os.path.join(vim_destination, "coravimrc")
 
     # this would mean nothing was crawled and set, so make it happen
     if not os.path.exists(runtime_path):
@@ -207,10 +243,6 @@ def make_virtualenv(repo_path):
         vim = find_vim(repo_path)
         vim_executable = which_vim()
 
-        bin_dir = os.path.join(runtime_path, "bin")
-        virtual_vim_executable = os.path.join(bin_dir, "vim")
-        vim_destination = os.path.join(runtime_path, ".vim")
-        coravimrc = os.path.join(vim_destination, "coravimrc")
         os.mkdir(bin_dir)
 
         shutil.copytree(vim, os.path.join(runtime_path, ".vim"), symlinks=True)
@@ -231,32 +263,31 @@ def make_virtualenv(repo_path):
 
         os.chmod(virtual_vim_executable, 0755)
 
-
     # otherwise we are just returning here, so we are good to go.
     # set the PATH environment variable and be done.
-    print "vim virtual runtime set"
-    print "before using it you will need to alter \$PATH"
-    print "export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin")
+    info("vim virtual runtime set")
+    info("before using it you will need to alter \$PATH")
+    info("export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin"))
     new_path = "export PATH=%s:\$PATH\n" % os.path.join(runtime_path, "bin")
     with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
         zshrc.write('source \$HOME/.zshrc\n')
         zshrc.write(new_path)
-        zshrc.write('export MYVIMRC="%s"' % os.path.join(vim_destination, '.vimrc'))
+        zshrc.write('export MYVIMRC="%s"\n' % os.path.join(vim_destination, '.vimrc'))
+
     with open(os.path.join(base_path, '.done'), 'w') as done_file:
-        done_file.write('')
+            done_file.write(new_path)
 
 def main():
     ensure_dir(cora_path)
     url = os.environ.get("CORA_URL")
     username = os.environ.get("CORA_USERNAME")
-    machine_out = os.environ.get("CORA_MACHINE_OUT")
 
     if not url and not username:
-        print "need to specify an HTTP repo and a name or just a name"
-        print "like:"
-        print "    cora http://github.com/username/dotfiles alfredo"
-        print "or:"
-        print "    cora alfredo"
+        error("need to specify an HTTP repo and a name or just a name")
+        error("like:")
+        error("    cora http://github.com/username/dotfiles alfredo")
+        error("or:")
+        error("    cora alfredo")
         raise SystemExit()
 
     if not url and username in os.listdir(cora_path):
@@ -280,25 +311,10 @@ def main():
 
     if username and not url:
         if username not in os.listdir(cora_path):
-            print 'a virtual runtime does not exist for user: %s' % username
-            print 'create a new one with: "cora [url|dir] username"'
+            error('a virtual runtime does not exist for user: %s' % username)
+            error('create a new one with: "cora [url|dir] username"')
 
 if __name__ == "__main__":
     main()
 END
-
-if [ -n "$(success)" ]; then
-
-    if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
-    then
-        executable=`which zsh`
-        export ZDOTDIR="$(zdotdir)"
-        exec $executable -i
-    elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
-    then
-        executable=`which bash`
-        exec $executable $(shell_flags)
-    fi
-
-fi
-
+shell_cmd
