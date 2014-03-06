@@ -158,7 +158,7 @@ def make_virtualenv(repo_path):
     print "vim virtual runtime set"
     print "before using it you will need to alter \$PATH"
     print "export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin")
-    with open(os.path.join(base_path, '.done')) as done_file:
+    with open(os.path.join(base_path, '.done'), 'w') as done_file:
             done_file.write('')
 
 def main():
