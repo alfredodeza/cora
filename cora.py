@@ -86,7 +86,6 @@ def which_vim():
 
 def run(cmd, **kw):
     info(' '.join(cmd))
-    stop_on_nonzero = kw.pop("stop_on_nonzero", True)
 
     process = subprocess.Popen(
         cmd,
@@ -140,7 +139,6 @@ def find_vim(starting_path):
     raise SystemExit("booo we could not find a .vim directory :(")
 
 
-
 def make_virtualenv(repo_path):
     info("making virtualenv from %s" % repo_path)
     base_path = os.path.dirname(repo_path)
@@ -186,13 +184,23 @@ def make_virtualenv(repo_path):
     info("before using it you will need to alter \$PATH")
     info("export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin"))
     new_path = "export PATH=%s:\$PATH\n" % os.path.join(runtime_path, "bin")
-    with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
-        zshrc.write('source \$HOME/.zshrc\n')
-        zshrc.write(new_path)
-        zshrc.write('export MYVIMRC="%s"\n' % os.path.join(vim_destination, '.vimrc'))
+    write_rc_file(rc_path, new_path, vim_destination)
 
     with open(os.path.join(base_path, '.done'), 'w') as done_file:
             done_file.write(new_path)
+
+
+def write_rc_file(rc_path, new_path, new_vim):
+    with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
+        zshrc.write('source \$HOME/.zshrc\n')
+        zshrc.write(new_path)
+        zshrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
+
+    with open(os.path.join(rc_path, '.bashrc'), 'w') as bashrc:
+        bashrc.write('source \$HOME/.zshrc\n')
+        bashrc.write(new_path)
+        bashrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
+
 
 def main():
     ensure_dir(cora_path)
