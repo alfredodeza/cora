@@ -161,7 +161,8 @@ def make_virtualenv(repo_path):
     new_path = "export PATH=%s:\$PATH\n" % os.path.join(runtime_path, "bin")
     with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
         zshrc.write(new_path)
-        zshrc.write('source $HOME/.zshrc')
+        zshrc.write('source \$HOME/.zshrc')
+        zshrc.write('export MYVIMRC="%s"' % os.path.join(vim_destination, '.vimrc'))
 
     with open(os.path.join(base_path, '.done'), 'w') as done_file:
             done_file.write(new_path)
