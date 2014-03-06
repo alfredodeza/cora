@@ -37,15 +37,19 @@ function shell_cmd {
     # shell might be a bit different so we need to call `which` on it to get
     # the right PATH to the executable.
     #
-    if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
-    then
-        executable=`which zsh`
-        export ZDOTDIR="$(zdotdir)"
-        echo "$executable -i"
-    elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
-    then
-        executable=`which bash`
-        echo "$executable $(shell_flags)"
+    if [ -n "$(success)" ]; then
+
+        if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
+        then
+            executable=`which zsh`
+            export ZDOTDIR="$(zdotdir)"
+            exec $executable -i
+        elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
+        then
+            executable=`which bash`
+            exec $executable $(shell_flags)
+        fi
+
     fi
 }
 
@@ -78,17 +82,3 @@ fi
 
 vre_bin="$(vre_path)/bin"
 
-if [ -n "$(success)" ]; then
-
-    if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
-    then
-        executable=`which zsh`
-        export ZDOTDIR="$(zdotdir)"
-        exec $executable -i
-    elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
-    then
-        executable=`which bash`
-        exec $executable $(shell_flags)
-    fi
-
-fi
