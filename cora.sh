@@ -47,7 +47,7 @@ shell_cmd() {
         elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
         then
             executable=`which bash`
-            exec $executable $(shell_flags)
+            exec $executable --rcfile "$(bashrc)" -i
         fi
 
     fi
@@ -70,6 +70,9 @@ bashrc() {
     echo "$(vre_path)/rc/.bashrc"
 }
 
+# Remove any previously set env variables
+unset CORA_USERNAME
+unset CORA_URL
 
 if [ "$#" = 1 ]; then
     export CORA_USERNAME="$1"
