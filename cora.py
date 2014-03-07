@@ -51,19 +51,19 @@ def colorize(msg, color):
 
 
 def warning(msg):
-    print "%s %s" % (colorize('>>>', 'yellow'), msg)
+    sys.stdout.write("%s %s" % (colorize('>>>', 'yellow'), msg))
 
 
 def debug(msg):
-    print "%s %s" % (colorize('>>>', 'blue'), msg)
+    sys.stdout.write("%s %s" % (colorize('>>>', 'blue'), msg))
 
 
 def info(msg):
-    print "%s %s" % (colorize('>>>', 'bold'), msg)
+    sys.stdout.write("%s %s" % (colorize('>>>', 'bold'), msg))
 
 
 def error(msg):
-    print "%s %s" % (colorize('>>>', 'red'), msg)
+    sys.stdout.write("%s %s" % (colorize('>>>', 'red'), msg))
 
 
 def which_vim():
