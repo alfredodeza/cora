@@ -8,14 +8,14 @@
 # As opposed to manually having to call ``export`` with the location
 #
 
-function vre_path {
+vre_path() {
     DIR="$HOME/.cora/$CORA_USERNAME"
     if [ -d "$DIR" ]; then
         echo "$DIR"
     fi
 }
 
-function shell_flags {
+shell_flags() {
     if [ -n "$ZSH_VERSION" ]
     then
         echo "-i"
@@ -27,7 +27,7 @@ function shell_flags {
 }
 
 
-function shell_cmd {
+shell_cmd() {
     # Attempt to get the right command to call for exec. It is actually tricky
     # to determine if we are BASH or ZSH because if we are on ZSH and are
     # executing the current script via /bin/sh which can be aliased to BASH
@@ -54,19 +54,19 @@ function shell_cmd {
 }
 
 
-function success {
+success() {
     if [ -e "$(vre_path)/.done" ]; then
         echo 1
     fi
 }
 
 
-function zdotdir {
+zdotdir() {
     echo "$(vre_path)/rc"
 }
 
 
-function bashrc {
+bashrc() {
     echo "$(vre_path)/rc/.bashrc"
 }
 
