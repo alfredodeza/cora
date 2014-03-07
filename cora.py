@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-import shutil
 import os
 import subprocess
 
@@ -51,19 +50,19 @@ def colorize(msg, color):
 
 
 def warning(msg):
-    sys.stdout.write("%s %s" % (colorize('>>>', 'yellow'), msg))
+    sys.stdout.write("%s %s\n" % (colorize('>>>', 'yellow'), msg))
 
 
 def debug(msg):
-    sys.stdout.write("%s %s" % (colorize('>>>', 'blue'), msg))
+    sys.stdout.write("%s %s\n" % (colorize('>>>', 'blue'), msg))
 
 
 def info(msg):
-    sys.stdout.write("%s %s" % (colorize('>>>', 'bold'), msg))
+    sys.stdout.write("%s %s\n" % (colorize('>>>', 'bold'), msg))
 
 
 def error(msg):
-    sys.stdout.write("%s %s" % (colorize('>>>', 'red'), msg))
+    sys.stdout.write("%s %s\n" % (colorize('>>>', 'red'), msg))
 
 
 def which_vim():
@@ -101,14 +100,14 @@ def run(cmd, **kw):
             if err == "" and process.poll() is not None:
                 break
             if err != "":
-                warning(err)
+                warning(err.strip('\n'))
                 sys.stderr.flush()
 
             out = process.stdout.readline()
             if out == "" and process.poll() is not None:
                 break
             if out != "":
-                debug(out)
+                debug(out.strip('\n'))
                 sys.stdout.flush()
 
 
@@ -144,9 +143,10 @@ def make_virtualenv(repo_path):
     base_path = os.path.dirname(repo_path)
     runtime_path = os.path.join(os.path.dirname(repo_path), "runtime")
     rc_path = os.path.join(os.path.dirname(repo_path), "rc")
-    bin_dir = os.path.join(runtime_path, "bin")
+    bin_dir = os.path.join(base_path, "bin")
     virtual_vim_executable = os.path.join(bin_dir, "vim")
     vim_destination = os.path.join(runtime_path, ".vim")
+    vimrc_destination = os.path.join(vim_destination, ".vimrc")
     coravimrc = os.path.join(vim_destination, "coravimrc")
 
     # this would mean nothing was crawled and set, so make it happen
@@ -160,13 +160,16 @@ def make_virtualenv(repo_path):
 
         os.mkdir(bin_dir)
 
-        shutil.copytree(vim, os.path.join(runtime_path, ".vim"), symlinks=True)
-        shutil.copyfile(vimrc, os.path.join(vim_destination, ".vimrc"))
+        debug("symlinking: %s %s" % (vim, vim_destination))
+        os.symlink(vim, vim_destination)
+        debug("symlinking: %s %s" % (vimrc, vimrc_destination))
+        os.symlink(vimrc, vimrc_destination)
 
         with open(coravimrc, "w") as coravimrc_file:
             coravimrc_file.write(coravimrc_contents.format(
-                runtime_vimrc_path=os.path.join(vim_destination, ".vimrc"))
+                runtime_vimrc_path=vimrc_destination)
             )
+        debug("created coravimrc at %s" % coravimrc)
 
         with open(virtual_vim_executable, "w") as vim_file:
             vim_file.write(
@@ -175,15 +178,14 @@ def make_virtualenv(repo_path):
                     coravimrc=coravimrc
                 )
             )
+        debug("created vim executable: %s" % virtual_vim_executable)
 
         os.chmod(virtual_vim_executable, 0755)
 
     # otherwise we are just returning here, so we are good to go.
     # set the PATH environment variable and be done.
-    info("vim virtual runtime set")
-    info("before using it you will need to alter \$PATH")
-    info("export PATH=%s:\$PATH" % os.path.join(runtime_path, "bin"))
-    new_path = "export PATH=%s:\$PATH\n" % os.path.join(runtime_path, "bin")
+    info("vim virtual runtime set! Happy vimming...")
+    new_path = "export PATH=%s:\$PATH\n" % bin_dir
     write_rc_file(rc_path, new_path, vim_destination)
 
     with open(os.path.join(base_path, '.done'), 'w') as done_file:
@@ -197,7 +199,7 @@ def write_rc_file(rc_path, new_path, new_vim):
         zshrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
 
     with open(os.path.join(rc_path, '.bashrc'), 'w') as bashrc:
-        bashrc.write('source \$HOME/.zshrc\n')
+        bashrc.write('source \$HOME/.bashrc\n')
         bashrc.write(new_path)
         bashrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
 
@@ -240,4 +242,14 @@ def main():
             error('create a new one with: "cora [url|dir] username"')
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as exc:
+        if str(exc):
+            error('%s: %s\n' % (exc.__class__.__name__, exc))
+        else:
+            error('%s\n' % (exc.__class__.__name__))
+        sys.exit(1)
+    except KeyboardInterrupt:
+        error('cancelling via Ctrl-C')
+        sys.exit(1)
