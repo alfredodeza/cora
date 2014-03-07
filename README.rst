@@ -1,5 +1,7 @@
 ``virtual runtime environments for vim``
 
+**Version: ALPHA (a.k.a. it will break left and right)**
+
 cora
 ====
 ``cora`` solves the problem of being able to carry all your vim configurations
