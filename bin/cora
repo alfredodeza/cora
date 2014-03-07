@@ -251,19 +251,22 @@ def make_virtualenv(repo_path):
         debug("symlinking: %s %s" % (vimrc, vimrc_destination))
         os.symlink(vimrc, vimrc_destination)
 
-        with open(coravimrc, "w") as coravimrc_file:
-            coravimrc_file.write(coravimrc_contents.format(
-                runtime_vimrc_path=vimrc_destination)
-            )
+        # Ungh python 2.4
+        coravimrc_file = open(coravimrc, "w")
+        coravimrc_file.write(coravimrc_contents.format(
+            runtime_vimrc_path=vimrc_destination)
+        )
+        coravimrc_file.close()
         debug("created coravimrc at %s" % coravimrc)
 
-        with open(virtual_vim_executable, "w") as vim_file:
-            vim_file.write(
-                vim_contents.format(
-                    vim_path=vim_executable,
-                    coravimrc=coravimrc
-                )
+        vim_file = open(virtual_vim_executable, "w")
+        vim_file.write(
+            vim_contents.format(
+                vim_path=vim_executable,
+                coravimrc=coravimrc
             )
+        )
+        vim_file.close()
         debug("created vim executable: %s" % virtual_vim_executable)
 
         os.chmod(virtual_vim_executable, 0755)
@@ -279,15 +282,17 @@ def make_virtualenv(repo_path):
 
 
 def write_rc_file(rc_path, new_path, new_vim):
-    with open(os.path.join(rc_path, '.zshrc'), 'w') as zshrc:
-        zshrc.write('source \$HOME/.zshrc\n')
-        zshrc.write(new_path)
-        zshrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
+    zshrc = open(os.path.join(rc_path, '.zshrc'), 'w')
+    zshrc.write('source \$HOME/.zshrc\n')
+    zshrc.write(new_path)
+    zshrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
+    zshrc.close()
 
-    with open(os.path.join(rc_path, '.bashrc'), 'w') as bashrc:
-        bashrc.write('source \$HOME/.bashrc\n')
-        bashrc.write(new_path)
-        bashrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
+    bashrc = open(os.path.join(rc_path, '.bashrc'), 'w')
+    bashrc.write('source \$HOME/.bashrc\n')
+    bashrc.write(new_path)
+    bashrc.write('export MYVIMRC="%s"\n' % os.path.join(new_vim, '.vimrc'))
+    bashrc.close()
 
 
 def main():
