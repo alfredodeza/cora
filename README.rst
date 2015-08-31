@@ -14,7 +14,11 @@ anything on the system-installed Vim.
 There is *no* installation, it is a single script. Download it, make it
 executable and use it::
 
-    curl -O https://raw.github.com/alfredodeza/cora/master/bin/cora && chmod a+x cora
+    curl -O https://raw.githubusercontent.com/alfredodeza/cora/master/bin/cora
+
+Or to place it directly on ``$HOME/bin/``:
+
+    curl -o ~/bin/cora https://raw.githubusercontent.com/alfredodeza/cora/master/bin/cora && chmod a+c ~/bin/cora
 
 Put it somewhere in your path so it is more convenient.
 
