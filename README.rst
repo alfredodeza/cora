@@ -18,7 +18,7 @@ executable and use it::
 
 Or to place it directly on ``$HOME/bin/``::
 
-    curl -o ~/bin/cora https://raw.githubusercontent.com/alfredodeza/cora/master/bin/cora && chmod a+c ~/bin/cora
+    curl -o ~/bin/cora https://raw.githubusercontent.com/alfredodeza/cora/master/bin/cora && chmod a+x ~/bin/cora
 
 Put it somewhere in your path so it is more convenient.
 
